@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<addon addon_id="customMessages4siropuChat" title="[kiror][Chat by Siropu] Custom join and leave messages" version_string="0.0" version_id="0" url="https://github.com/adlerosn/" install_callback_class="customMessages4siropuChat_Setup" install_callback_method="install" uninstall_callback_class="customMessages4siropuChat_Setup" uninstall_callback_method="uninstall">
+  <admin_navigation/>
+  <admin_permissions/>
+  <admin_style_properties/>
+  <admin_templates/>
+  <admin_template_modifications/>
+  <code_events/>
+  <code_event_listeners>
+    <listener event_id="load_class_controller" execute_order="10" callback_class="customMessages4siropuChat_Extend" callback_method="callback" active="1" hint="Siropu_Chat_ControllerPublic_Chat" description="Add sublink handler"/>
+    <listener event_id="load_class_datawriter" execute_order="10" callback_class="customMessages4siropuChat_Extend" callback_method="callback" active="1" hint="Siropu_Chat_DataWriter_Messages" description="Custom welcoming messages"/>
+  </code_event_listeners>
+  <cron/>
+  <email_templates/>
+  <email_template_modifications/>
+  <optiongroups/>
+  <permissions>
+    <permission_groups/>
+    <permissions>
+      <permission permission_group_id="siropu_chat" permission_id="customizeJoinLeave" permission_type="flag" default_value="unset" interface_group_id="siropu_chat" display_order="22"/>
+    </permissions>
+    <interface_groups/>
+  </permissions>
+  <phrases>
+    <phrase title="permission_siropu_chat_customizeJoinLeave" version_id="0" version_string="0.0"><![CDATA[Customize Join/Leave messages]]></phrase>
+    <phrase title="siropu_chat_edit_custom_join_leave" version_id="0" version_string="0.0"><![CDATA[Customize Join/Leave messages]]></phrase>
+  </phrases>
+  <route_prefixes/>
+  <style_properties/>
+  <templates>
+    <template title="siropu_chat_joinLeaveMessage" version_id="0" version_string="0.0"><![CDATA[<xen:h1>{xen:phrase siropu_chat_edit_custom_join_leave}</xen:h1>
+
+<div class="section">
+	<div class="primaryContent">
+		<form action="{xen:link 'chat/CustomJoinLeaveMessages'}" method="post" class="xenForm AutoValidator">
+			<dl class="ctrlUnit">
+				<dt><label for="ctrl_chat_join">{xen:phrase Join}:</label></dt>
+				<dd>
+					<input
+						type="textbox"
+						name="join"
+						id="ctrl_chat_join"
+						class="textCtrl"
+						maxlength="255"
+						value="{$current.j}"
+						placeholder="{$default.join}"
+					/>
+				</dd>
+				<dt><label for="ctrl_chat_leave">{xen:phrase Leave}:</label></dt>
+				<dd>
+					<input
+						type="textbox"
+						name="leave"
+						id="ctrl_chat_leave"
+						class="textCtrl"
+						maxlength="255"
+						value="{$current.l}"
+						placeholder="{$default.leave}"
+					/>
+				</dd>
+			</dl>
+			<dl class="ctrlUnit submitUnit">
+				<dt></dt>
+				<dd>
+					<input type="submit" class="button primary" value="{xen:phrase save}" />
+					<input type="button" class="button OverlayCloser" value="{xen:phrase cancel}" />
+				</dd>
+			</dd>
+			<input type="hidden" name="_xfToken" value="{$visitor.csrf_token_page}" />
+			<input type="hidden" name="_xfConfirm" value="1" />
+		</form>
+	</div>
+</div>]]></template>
+  </templates>
+  <public_template_modifications>
+    <modification template="siropu_chat" modification_key="addcustomjoinleavecustomizer" description="Adds link for custom join/leave messages" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[<xen:if is="{$visitor.permissions.siropu_chat.setStatus}">]]></find>
+      <replace><![CDATA[<xen:if is="{$visitor.permissions.siropu_chat.customizeJoinLeave}">
+							<li><a href="{xen:link chat/customJoinLeaveMessages}" class="OverlayTrigger" data-cacheoverlay="false">{xen:phrase siropu_chat_edit_custom_join_leave}</a></li>
+						</xen:if>
+						$0]]></replace>
+    </modification>
+    <modification template="siropu_chat_banned" modification_key="addcustomjoinleavecustomizermoderationtab" description="Adds tab for moderation for custom join/leave messages" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[<li{xen:if '{$search.type} == "mute"',' class="active"', ''}><a href="{xen:link 'chat/banned', '', 'type=mute'}">{xen:phrase siropu_chat_list_muted}</a></li>]]></find>
+      <replace><![CDATA[$0
+		<li{xen:if '{$search.type} == "cgrt"',' class="active"', ''}><a href="{xen:link 'chat/banned', '', 'type=cgrt'}">Custom greeting</a></li>]]></replace>
+    </modification>
+    <modification template="siropu_chat_banned" modification_key="addcustomjoinleavecustomizermoderationtable" description="Adds table for moderation for custom join/leave messages" execution_order="10" enabled="1" action="str_replace">
+      <find><![CDATA[<p>{xen:if '{$search.username}', '{xen:phrase no_results_found}', '{xen:phrase siropu_chat_no_muted_users}'}</p>]]></find>
+      <replace><![CDATA[$0
+		<xen:elseif is="{$search.type} == 'cgrt'" />
+<table id="siropuChatUsers" class="dataTable" width="100%">
+	<tr class="dataRow">
+		<th width="15%">{xen:phrase user_name}</th>
+		<th width="38%">{xen:phrase Join}</th>
+		<th width="37%">{xen:phrase Leave}</th>
+		<th width="10%">{xen:phrase delete}</th>
+	</tr>
+<xen:foreach loop="$jl" value="$entry">
+<tr class="dataRow">
+	<td><xen:username user="$entry.user" rich="true" /></td>
+	<td>{$entry.j}</td>
+	<td>{$entry.l}</td>
+	<td><a class="button" style="padding: 3px;" href="{xen:link 'chat/banned','','type=cgrt','del={$entry.uid}'}"><img src="styles/default/xenforo/permissions/deny.png" /></a></td>
+</tr>
+</xen:foreach>
+</table>]]></replace>
+    </modification>
+  </public_template_modifications>
+  <bb_code_media_sites/>
+  <bb_codes/>
+</addon>
